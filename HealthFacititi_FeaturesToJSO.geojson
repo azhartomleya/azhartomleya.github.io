@@ -1,0 +1,186 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.204811079191209, 31.898848178094777]
+      },
+      "properties": {
+        "BUSNIESS_N": "مجمع فلسطين الطبي",
+        "BUSNIESS_1": "Palestine Medical Complex",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.205078284254341, 31.905379392600199]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى الرعاية التخصصي",
+        "BUSNIESS_1": "Care Specialist Hospital",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.204428326166202, 31.897747383972042]
+      },
+      "properties": {
+        "BUSNIESS_N": "مركز دكتور ضرغام",
+        "BUSNIESS_1": "Dr. Dergham Clinic",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.214167418863404, 31.914433044313196]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى المستقبل",
+        "BUSNIESS_1": "Al Mustakbal Hospital",
+        "CITY": "البيرة"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.206537250841556, 31.90463383996682]
+      },
+      "properties": {
+        "BUSNIESS_N": "المركز الصحي العربي",
+        "BUSNIESS_1": "Arabic Health Center",
+        "CITY": "البيرة"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.162314203615608, 31.933553067680933]
+      },
+      "properties": {
+        "BUSNIESS_N": "المستشفى الاستشاري العربي",
+        "BUSNIESS_1": "Istishari Arab Hospital",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.211764641042308, 31.905857815031091]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى الهلال الأحمر الفلسطيني",
+        "BUSNIESS_1": "Palestinian Red Crescent Hospital",
+        "CITY": "البيرة"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.21257720450641, 31.89271345985243]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى الهلال الأحمر",
+        "BUSNIESS_1": "Alhilal Alahmar Hospital",
+        "CITY": "البيرة"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.206928614026438, 31.921772929302229]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى خالد",
+        "BUSNIESS_1": "Khalid Hospital",
+        "CITY": "البيرة"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.190846232397021, 31.898584530835155]
+      },
+      "properties": {
+        "BUSNIESS_N": "مركز أبوريا التخصصي",
+        "BUSNIESS_1": "Abu Rayya Rehabilitation Center",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.1848, 31.9065]
+      },
+      "properties": {
+        "BUSNIESS_N": "مركز كلينيكير الطبي",
+        "BUSNIESS_1": "Clinicare Medical Center",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.1955, 31.9022]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى H Clinic",
+        "BUSNIESS_1": "H Clinic Hospital",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.1932, 31.9025]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى يافا الجراحي",
+        "BUSNIESS_1": "Yafa Surgical Hospital",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.206390854139464, 31.906435211638339]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى الناظر للولادة",
+        "BUSNIESS_1": "Nazer Maternity Hospital",
+        "CITY": "رام الله"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.214711311496423, 31.896593436528104]
+      },
+      "properties": {
+        "BUSNIESS_N": "مستشفى الرازي",
+        "BUSNIESS_1": "Al Razi Hospital",
+        "CITY": "البيرة"
+      }
+    }
+  ]
+}
+

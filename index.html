@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خريطة المستشفيات والمراكز الصحية</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #map { width: 100%; height: 100vh; }
+        .search-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .search-container input {
+            width: 250px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .legend {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-size: 14px;
+        }
+        .info-container {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+            font-family: Arial, sans-serif;
+            width: 300px;
+        }
+        .info-container h3 {
+            margin: 0;
+            font-size: 18px;
+            background-color: #0056b3;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="ابحث عن مستشفى أو مركز صحي" />
+    </div>
+    <div class="info-container" id="info-container">
+        <h3>معلومات المستشفى/المركز</h3>
+        <div id="info-sections"></div>
+    </div>
+ 
+    <div id="emergency-tool" style="position: absolute; bottom: 70px; left: 10px; z-index: 1000;">
+        <button id="emergency-main-button" style="background-color: #007bff; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer; width: 200px; font-size: 16px;">
+            اتصل بالطوارئ
+        </button>
+        <div id="emergency-options" style="display: none; margin-top: 10px; background-color: white; color: black; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 14px;">
+            <button class="emergency-option" data-type="police" style="margin-bottom: 5px; background-color: #007bff; color: white; padding: 8px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">شرطة الطوارئ</button>
+            <button class="emergency-option" data-type="ambulance" style="margin-bottom: 5px; background-color: #007bff; color: white; padding: 8px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">الإسعاف</button>
+            <button class="emergency-option" data-type="hospitals" style="background-color: #007bff; color: white; padding: 8px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">المستشفيات والمراكز الصحية</button>
+        </div>
+        <div id="emergency-details" style="display: none; margin-top: 10px; background-color: white; color: black; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 14px;"></div>
+    </div>
+  <div id="notes-tool" style="position: absolute; bottom: 10px; left: 10px; z-index: 1000;">
+    <button id="notes-main-button" style="background-color: #007bff; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer; width: 200px; font-size: 16px;">
+        📔 دفتر الملاحظات
+    </button>
+    <div id="notes-container" style="display: none; margin-top: 10px; background-color: white; color: black; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 14px; width: 200px;">
+        <textarea id="notes-textarea" style="width: 100%; height: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;" placeholder="اكتب ملاحظتك هنا..."></textarea>
+        <button id="save-notes" style="margin-top: 5px; background-color: #007bff; color: white; padding: 8px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">حفظ الملاحظات</button>
+    </div>
+</div>
+<div id="rating-tool" style="position: absolute; bottom: 10px; left: 220px; z-index: 1000;">
+    <button id="rating-main-button" style="background-color: #28a745; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer; width: 200px; font-size: 16px;">
+        ⭐ تقييم رضا الزوار
+    </button>
+    <div id="rating-container" style="display: none; margin-top: 10px; background-color: white; color: black; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 14px; width: 200px;">
+        <p>ما مدى رضاك عن الخدمة؟</p>
+        <div id="stars-container" style="text-align: center; margin-bottom: 10px;">
+            <span class="star" data-value="1" style="font-size: 24px; cursor: pointer;">⭐</span>
+            <span class="star" data-value="2" style="font-size: 24px; cursor: pointer;">⭐</span>
+            <span class="star" data-value="3" style="font-size: 24px; cursor: pointer;">⭐</span>
+            <span class="star" data-value="4" style="font-size: 24px; cursor: pointer;">⭐</span>
+            <span class="star" data-value="5" style="font-size: 24px; cursor: pointer;">⭐</span>
+        </div>
+        <button id="submit-rating" style="background-color: #28a745; color: white; padding: 8px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">إرسال التقييم</button>
+    </div>
+</div>
+<div id="google-maps-tool">
+    <button id="google-maps-button" class="tool-button">
+        🌍 فتح في Google Maps
+    </button>
+    <div id="google-maps-container" style="display: none; margin-top: 10px; background-color: white; color: black; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 14px; width: 200px;">
+        <p>اختر الموقع لفتح Google Maps</p>
+    </div>
+</div>
+
+<style>
+/* إخفاء زر تحديد المواقع */
+#google-maps-button {
+    display: none;
+}
+</style>
+<div id="dark-mode-tool" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+    <button id="dark-mode-button" style="background-color: #007bff; color: white; padding: 10px; border-radius: 50%; border: none; cursor: pointer; font-size: 24px;">
+        🌞
+    </button>
+<!-- Logo Container -->
+<div class="logo-container">
+    <img src="https://i.ibb.co/J2dFsgW/DALL-E-2025-01-13-10-23-02-A-professional-and-modern-circular-logo-design-for-Hospitals-and-Med.webp" alt="Hospitals Logo">
+    <h1>توزيع المستشفيات والمراكز الصحية في محافظة رام الله والبيرة</h1>
+</div>
+
+
+
+<style>
+    .logo-container {
+        position: relative;
+        float: left;
+        transform: translateX(-50%); /* لضمان التوسيط الكامل */
+        z-index: 2000; /* لإظهار اللوقو فوق كافة العناصر الأخرى */
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.9); /* خلفية شبه شفافة */
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .logo-container img {
+        float: left;
+        max-width: 50px; /* تحديد عرض مناسب للصورة */
+        padding-right: 5px;
+        height: auto;
+        margin: 0 auto;
+    }
+    .logo-container h1 {
+        float: right;
+        margin: 10px 0 0; /* مسافة مناسبة بين العنوان والصورة */
+        font-size: 20px;
+        font-family: Arial, sans-serif;
+        color: #333;
+    }
+</style>
+    <script>
+        var map = L.map('map').setView([31.9, 35.2], 12);
+        var markers;
+ 
+        L.tileLayer(`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`, {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+ 
+        fetch('https://azhartomleya.github.io/RamallahZones.json')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: "blue", fillColor: "rgba(0, 0, 255, 0.1)", fillOpacity: 0.5 }
+                }).addTo(map);
+            });
+ 
+        fetch('https://azhartomleya.github.io/HealthFacititi_FeaturesToJSO.geojson')
+            .then(response => response.json())
+            .then(data => {
+                markers = L.layerGroup().addTo(map);
+ 
+  const infoData = {
+    "مجمع فلسطين الطبي": {
+        intro: "أكبر مستشفى حكومي في الضفة الغربية يقدم خدمات طبية شاملة.",
+        departments: "الطوارئ، العناية المركزة، الجراحة العامة، الأمراض الباطنية، الكلى والغسيل الكلوي، الأورام، الأطفال.",
+        clinics: "عيادة الأورام: د. مازن عبد الله (الأحد والثلاثاء، 8 صباحًا - 2 مساءً).<br>عيادة الكلى: د. سحر عادل (يوميًا، 7 صباحًا - 3 مساءً).",
+        classification: "حكومي"
+    },
+    "مستشفى الرعاية التخصصي": {
+        intro: "مستشفى خاص يقدم خدمات متقدمة باستخدام أحدث التقنيات.",
+        departments: "الجراحة العامة، أمراض القلب، الأمراض الباطنية والجهاز الهضمي، الأطفال وحديثي الولادة، أمراض النساء والتوليد.",
+        clinics: "عيادة القلب: د. مؤيد دعبيس (9:30 صباحًا - 1 مساءً).<br>عيادة الأطفال: د. عمر قلالوة (9 صباحًا - 2 مساءً).",
+        classification: "خاص، متميز"
+    },
+    "مركز دكتور ضرغام": {
+        intro: "مركز صحي يقدم خدمات الرعاية الأولية والتطعيمات.",
+        departments: "الطب العام، التطعيمات.",
+        clinics: "عيادة الطب العام: د. ضرغام علي (8 صباحًا - 2 مساءً).",
+        classification: "مركز صحي"
+    },
+    "مستشفى المستقبل": {
+        intro: "مستشفى يقدم خدمات طبية متعددة التخصصات.",
+        departments: "الطوارئ، الأمراض الباطنية، الأطفال، النساء والتوليد.",
+        clinics: "عيادة الأطفال: د. حنان شهاب (8 صباحًا - 4 مساءً).",
+        classification: "خاص"
+    },
+    "المركز الصحي العربي": {
+        intro: "مركز صحي يقدم خدمات طبية شاملة.",
+        departments: "الطب العام، طب الأطفال، النساء والتوليد.",
+        clinics: "عيادة الطب العام: د. ليلى العربي (9 صباحًا - 2 مساءً).",
+        classification: "مركز صحي خاص"
+    },
+    "المستشفى الاستشاري العربي": {
+        intro: "مستشفى خاص يقدم خدمات متقدمة.",
+        departments: "الجراحة العامة، الأورام، القلب، العيون، الأمراض الباطنية.",
+        clinics: "عيادة الأورام: د. فراس عليان (بحجز مسبق).",
+        classification: "خاص"
+    },
+    "مستشفى الهلال الأحمر الفلسطيني": {
+        intro: "مستشفى يقدم خدمات الطوارئ والرعاية الصحية المتخصصة.",
+        departments: "الطوارئ، العلاج الطبيعي، الجراحة العامة.",
+        clinics: "عيادة الطوارئ: د. خالد عبد الله (24 ساعة يوميًا).",
+        classification: "خيري"
+    },
+    "مستشفى الهلال الأحمر": {
+        intro: "مستشفى يقدم خدمات متنوعة.",
+        departments: "الجراحة العامة، العظام، الطوارئ.",
+        clinics: "عيادة الجراحة العامة: د. سامي الرازي (9 صباحًا - 3 مساءً).",
+        classification: "خيري"
+    },
+    "مستشفى خالد": {
+        intro: "مستشفى يقدم خدمات متعددة التخصصات.",
+        departments: "الطوارئ، النساء والتوليد، الجراحة العامة.",
+        clinics: "عيادة الطوارئ: د. خالد علي (8 صباحًا - 4 مساءً).",
+        classification: "خاص"
+    },
+    "مركز أبوريا التخصصي": {
+        intro: "مركز متخصص في التأهيل الطبي وعلاج الإصابات.",
+        departments: "العلاج الطبيعي، إعادة التأهيل، الرعاية النفسية.",
+        clinics: "عيادة التأهيل الطبي: د. نبيل أبو ريا (8 صباحًا - 3 مساءً).",
+        classification: "خاص"
+    },
+    "مركز كلينيكير الطبي": {
+        intro: "مركز طبي يقدم خدمات الرعاية الطبية الأساسية.",
+        departments: "الطب العام، طب الأطفال.",
+        clinics: "عيادة الطب العام: د. مازن حماد (9 صباحًا - 4 مساءً).",
+        classification: "خاص"
+    },
+    "مستشفى H Clinic": {
+        intro: "مستشفى يقدم خدمات طبية متقدمة.",
+        departments: "الجراحة العامة، أمراض القلب، العناية المركزة.",
+        clinics: "عيادة القلب: د. مؤيد الأسعد (9 صباحًا - 3 مساءً).",
+        classification: "خاص"
+    },
+    "مستشفى يافا الجراحي": {
+        intro: "مستشفى خاص يقدم خدمات متميزة.",
+        departments: "الجراحة العامة، العظام، العيون.",
+        clinics: "عيادة العيون: د. سامر خليل (11 صباحًا - 3 مساءً).",
+        classification: "خاص"
+    },
+    "مستشفى الناظر للولادة": {
+        intro: "مستشفى خاص متخصص في خدمات الولادة وأمراض النساء.",
+        departments: "الولادة الطبيعية، أمراض النساء والتوليد.",
+        clinics: "عيادة النساء والتوليد: د. منى خليل (8 صباحًا - 2 مساءً).",
+        classification: "خاص"
+    },
+    "مستشفى الرازي": {
+        intro: "مستشفى يقدم خدمات طبية متعددة التخصصات.",
+        departments: "الطوارئ، العظام، الجراحة العامة.",
+        clinics: "عيادة العظام: د. خالد يوسف (9 صباحًا - 2 مساءً).",
+        classification: "خاص"
+    }
+};
+ 
+ 
+                data.features.forEach(feature => {
+                    var name = feature.properties.BUSNIESS_N || "غير معروف";
+                    var city = feature.properties.CITY || "غير معروف";
+                    var coordinates = feature.geometry.coordinates;
+ 
+                    var icon = L.divIcon({
+                        className: '',
+                        html: `<div style="font-size: 24px; text-align: center;">${name.includes("مركز") ? '🩺' : '🏥'}</div>`
+                    });
+ 
+                    var marker = L.marker([coordinates[1], coordinates[0]], { icon: icon }).addTo(markers);
+                    marker.bindPopup(`<b>${name}</b><br>المدينة: ${city}`);
+ 
+                    marker.on('click', function () {
+                        const sectionsContainer = document.getElementById('info-sections');
+                        sectionsContainer.innerHTML = '';
+ 
+                        const hospitalInfo = infoData[name] || {
+                            intro: "لا توجد بيانات.",
+                            departments: "لا توجد بيانات.",
+                            clinics: "لا توجد بيانات.",
+                            classification: "لا توجد بيانات."
+                        };
+ 
+                        const sections = [
+                            { title: 'المقدمة', content: hospitalInfo.intro },
+                            { title: 'الأقسام', content: hospitalInfo.departments },
+                            { title: 'العيادات الخارجية', content: hospitalInfo.clinics },
+                            { title: 'التصنيف', content: hospitalInfo.classification }
+                        ];
+ 
+                        sections.forEach(section => {
+                            const sectionDiv = document.createElement('div');
+                            sectionDiv.classList.add('info-section');
+                            sectionDiv.innerHTML = `${section.title} <span>▼</span>`;
+ 
+                            const contentDiv = document.createElement('div');
+                            contentDiv.classList.add('info-section-content');
+                            contentDiv.innerHTML = section.content;
+ 
+                            sectionDiv.appendChild(contentDiv);
+                            sectionDiv.addEventListener('click', () => {
+                                sectionDiv.classList.toggle('active');
+                            });
+ 
+                            sectionsContainer.appendChild(sectionDiv);
+                        });
+ 
+                        document.getElementById('info-container').style.display = 'block';
+                    });
+                });
+            });
+ 
+            document.getElementById('search-input').addEventListener('input', function () {
+                    var query = this.value.toLowerCase();
+                    var found = false;
+ 
+                    markers.eachLayer(function (layer) {
+                        if (layer.getPopup().getContent().toLowerCase().includes(query)) {
+                            map.setView(layer.getLatLng(), 15);
+                            layer.openPopup();
+                            found = true;
+                        }
+                    });
+ 
+                    if (!found && query.trim() !== "") {
+                        alert('لم يتم العثور على المستشفى أو المركز الصحي');
+                        map.setView([31.9, 35.2], 12); // Reset to default view
+                    }
+                });
+ 
+ 
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML += '<span>🏥</span> مستشفى<br>';
+            div.innerHTML += '<span>🩺</span> مركز صحي<br>';
+            div.innerHTML += '<i style="background: rgba(0, 0, 255, 0.1); display: inline-block; width: 20px; height: 20px;"></i> مضلع رام الله';
+            return div;
+        };
+        legend.addTo(map);
+ 
+        document.addEventListener('DOMContentLoaded', () => {
+            const emergencyMainButton = document.getElementById('emergency-main-button');
+            const emergencyOptions = document.getElementById('emergency-options');
+            const emergencyDetails = document.getElementById('emergency-details');
+            const optionsButtons = document.querySelectorAll('.emergency-option');
+ 
+            emergencyMainButton.addEventListener('click', () => {
+                if (emergencyOptions.style.display === 'none' || emergencyOptions.style.display === '') {
+                    emergencyOptions.style.display = 'block';
+                    emergencyDetails.style.display = 'none';
+                } else {
+                    emergencyOptions.style.display = 'none';
+                }
+            });
+ 
+            optionsButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const type = button.getAttribute('data-type');
+                    let content = '';
+ 
+                    if (type === 'police') {
+    content = `
+        <ul>
+            <li>رقم الشرطة: <b style="color: red;">100</b></li>
+        </ul>
+    `;
+} else if (type === 'ambulance') {
+    content = `
+        <ul>
+            <li>رقم الإسعاف: <b style="color: green;">101</b></li>
+        </ul>
+    `;
+} else if (type === 'hospitals') {
+    content = `
+        <ul>
+            <li>مجمع فلسطين الطبي: <b style="color: blue;">022982222</b></li>
+            <li>مستشفى الرعاية التخصصي: <b style="color: blue;">022986419</b></li>
+            <li>مستشفى الهلال الأحمر الفلسطيني: <b style="color: blue;">022978520</b></li>
+            <li>مستشفى الهلال الأحمر: <b style="color: blue;">0592406211</b></li>
+            <li>مستشفى خالد: <b style="color: blue;">0599237885</b></li>
+            <li>مستشفى H Clinic: <b style="color: blue;">022962204</b></li>
+            <li>مستشفى يافا الجراحي: <b style="color: blue;">022929674</b></li>
+            <li>مستشفى الناظر للولادة: <b style="color: blue;">02955295</b></li>
+            <li>مستشفى الرازي: <b style="color: blue;">022406330</b></li>
+            <li>مستشفى المستقبل: <b style="color: blue;">022404562</b></li>
+            <li>مركز أبو ريا التخصصي: <b style="color: blue;">022957060</b></li>
+            <li>مركز كلينيكير الطبي: <b style="color: blue;">0562101252</b></li>
+            <li>مركز دكتور ضرغام: <b style="color: blue;">022973406</b></li>
+            <li>المركز الصحي العربي: <b style="color: blue;">022955620</b></li>
+            <li>المستشفى الاستشاري العربي: <b style="color: blue;">022943200</b></li>
+        </ul>
+    `;
+}
+ 
+                    emergencyDetails.innerHTML = content;
+                    emergencyOptions.style.display = 'none';
+                    emergencyDetails.style.display = 'block';
+                });
+            });
+        });
+document.addEventListener('DOMContentLoaded', () => {
+    const notesMainButton = document.getElementById('notes-main-button');
+    const notesContainer = document.getElementById('notes-container');
+    const notesTextarea = document.getElementById('notes-textarea');
+    const saveNotesButton = document.getElementById('save-notes');
+ 
+    // فتح/إغلاق أداة الملاحظات
+    notesMainButton.addEventListener('click', () => {
+        notesContainer.style.display =
+            notesContainer.style.display === 'none' || notesContainer.style.display === ''
+                ? 'block'
+                : 'none';
+    });
+ 
+    // حفظ الملاحظات
+    saveNotesButton.addEventListener('click', () => {
+        const notes = notesTextarea.value.trim();
+        if (notes === '') {
+            alert('الملاحظة فارغة، الرجاء إدخال نص.');
+            return;
+        }
+        localStorage.setItem('userNotes', notes);
+        alert('تم حفظ الملاحظات بنجاح!');
+    });
+ 
+    // استرجاع الملاحظات
+    const savedNotes = localStorage.getItem('userNotes');
+    if (savedNotes) {
+        notesTextarea.value = savedNotes;
+    }
+});
+    document.addEventListener('DOMContentLoaded', () => {
+    const ratingMainButton = document.getElementById('rating-main-button');
+    const ratingContainer = document.getElementById('rating-container');
+    const stars = document.querySelectorAll('.star');
+    const submitRatingButton = document.getElementById('submit-rating');
+ 
+    let selectedRating = 0;
+ 
+    // فتح/إغلاق أداة التقييم
+    ratingMainButton.addEventListener('click', () => {
+        ratingContainer.style.display =
+            ratingContainer.style.display === 'none' || ratingContainer.style.display === ''
+                ? 'block'
+                : 'none';
+    });
+ 
+    // تحديد التقييم
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = star.getAttribute('data-value');
+            stars.forEach(s => {
+                s.style.color = s.getAttribute('data-value') <= selectedRating ? '#ffc107' : '#ccc';
+            });
+        });
+    });
+ 
+    // إرسال التقييم
+    submitRatingButton.addEventListener('click', () => {
+        if (selectedRating === 0) {
+            alert('يرجى اختيار تقييم.');
+            return;
+        }
+ 
+        alert(`شكرًا لتقييمك! تم تسجيل تقييمك بـ ${selectedRating} نجوم.`);
+        ratingContainer.style.display = 'none';
+        selectedRating = 0;
+        stars.forEach(star => (star.style.color = '#ccc'));
+    });
+});
+   document.addEventListener('DOMContentLoaded', () => {
+    const googleMapsButton = document.getElementById('google-maps-button');
+    const googleMapsContainer = document.getElementById('google-maps-container');
+ 
+    // فتح/إغلاق أداة Google Maps
+    googleMapsButton.addEventListener('click', () => {
+        googleMapsContainer.style.display =
+            googleMapsContainer.style.display === 'none' || googleMapsContainer.style.display === ''
+                ? 'block'
+                : 'none';
+    });
+ 
+    // إنشاء العلامات وإضافة رابط Google Maps
+    fetch('https://azhartomleya.github.io/HealthFacititi_FeaturesToJSO.geojson')
+        .then(response => response.json())
+        .then(data => {
+            const markers = L.layerGroup().addTo(map);
+ 
+            data.features.forEach(feature => {
+                const name = feature.properties.BUSNIESS_N || "غير معروف";
+                const coordinates = feature.geometry.coordinates;
+ 
+                var marker = L.marker([coordinates[1], coordinates[0]]).addTo(markers);
+ 
+                const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${coordinates[1]},${coordinates[0]}&travelmode=driving`;
+ 
+                marker.bindPopup(`
+                    <b>${name}</b><br>
+                    <a href="${googleMapsLink}" target="_blank" style="color: blue; text-decoration: underline;">
+                        افتح في Google Maps
+                    </a>
+                `);
+ 
+                // إضافة حدث النقر لتفعيل الرابط
+                marker.on('click', () => {
+                    googleMapsContainer.innerHTML = `
+                        <p>تم تحديد الموقع:</p>
+                        <a href="${googleMapsLink}" target="_blank" style="color: blue; text-decoration: underline;">
+                            اضغط هنا لفتح Google Maps
+                        </a>
+                    `;
+                });
+            });
+        })
+        .catch(error => console.error('Error loading GeoJSON:', error));
+});
+   document.addEventListener('DOMContentLoaded', () => {
+    const darkModeButton = document.getElementById('dark-mode-button');
+    const mapElement = document.getElementById('map');
+    let isDarkMode = false;
+ 
+    // تغيير الوضع عند النقر على الزر
+    darkModeButton.addEventListener('click', () => {
+        if (!isDarkMode) {
+            // تفعيل الوضع الليلي
+            mapElement.style.filter = 'invert(1) hue-rotate(180deg)';
+            document.body.style.backgroundColor = 'black';
+            darkModeButton.textContent = '🌙'; // تغيير الأيقونة إلى قمر
+        } else {
+            // العودة للوضع العادي
+            mapElement.style.filter = 'none';
+            document.body.style.backgroundColor = 'white';
+            darkModeButton.textContent = '🌞'; // تغيير الأيقونة إلى شمس
+        }
+        isDarkMode = !isDarkMode; // تبديل الوضع
+    });
+});
+    </script>
+</body>
+</html>
